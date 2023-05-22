@@ -9,6 +9,7 @@
 , llvmPackages ? pkgs.llvmPackages_latest
 , mkShell ? pkgs.mkShell
 , pkg-config ? pkgs.pkg-config
+, python3 ? pkgs.python3
 }:
 
 (mkShell.override { stdenv = cudaPackages.backendStdenv; }) {
@@ -32,7 +33,7 @@
   ];
 
   # A pretty dumb untested hook trying to figure out where non-NixOS systems
-  # put their libcuda.so
+  # put their libcuda.so. You'll probably want to delete the whole thing
   shellHook = ''
     if [[ -d "${addOpenGLRunpath.driverLink}/lib"  ]] ; then
       addToSearchPath LD_LIBRARY_PATH "${addOpenGLRunpath.driverLink}/lib"
@@ -58,5 +59,16 @@
     else
       echo "Couldn't locate libcuda.so, you'll have to do it manually" >&2
     fi
+
+    ${python3}/bin/python - << \EOF
+    import ctypes
+    try:
+      ctypes.CDLL("libcuda.so")
+    except OSError:
+      print(
+        'dlopen("libcuda.so", ...) fails to find the library.'
+        ' You need to find where does your OS deploy libcuda.so,'
+        ' and then configure your LD_LIBRARY_PATH or LD_PRELOAD')
+    EOF
   '';
 }
