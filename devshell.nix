@@ -1,7 +1,17 @@
-with import <nixpkgs> { config.allowUnfree = true; };
+# Gets the pinned pkgs from flake.lock, when used with `nix develop`. When used
+# with `nix-shell devshell.nix` instead, imports the system-wide (unpinned)
+# nixpgks channel
+{ pkgs ? import <nixpkgs> { config.allowUnfree = true; }
+, addOpenGLRunpath ? pkgs.addOpenGLRunpath
+, cmake ? pkgs.cmake
+, cudaPackages ? pkgs.cudaPackages
+, gnugrep ? pkgs.gnugrep
+, llvmPackages ? pkgs.llvmPackages_latest
+, mkShell ? pkgs.mkShell
+, pkg-config ? pkgs.pkg-config
+}:
 
-# Default to clang instead of gcc
-(mkShell.override { stdenv = llvmPackages_latest.stdenv; }) {
+(mkShell.override { stdenv = cudaPackages.backendStdenv; }) {
   buildInputs = with cudaPackages; [
     cuda_cudart
     cuda_cccl # Thrust, CUB, &c
@@ -12,9 +22,10 @@ with import <nixpkgs> { config.allowUnfree = true; };
     cudaPackages.nsight_systems
     cudaPackages.cuda_sanitizer_api
 
-    llvmPackages_latest.openmp
+    llvmPackages.clang
 
-    gcc
+    # LLVM ships OpenMP separately from clang
+    llvmPackages.openmp
 
     cmake
     pkg-config
