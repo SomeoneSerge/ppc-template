@@ -51,7 +51,7 @@
       if [[ ! -d .cuda-driver ]] ; then
         while read -r p ; do
           mkdir -p .cuda-driver
-          ln -s "$p" .cuda-driver/
+          ln -sf "$p" .cuda-driver/
           echo Symlinking "$p" to "$PWD/.cuda-driver/" >&2
         done < <(strings /etc/ld.so.cache | ${gnugrep}/bin/grep -oE '/[[:alnum:]/_-]+/(libcuda.so|libnvidia-ml.so)\b')
       fi
